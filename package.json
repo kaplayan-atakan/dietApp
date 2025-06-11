@@ -1,0 +1,88 @@
+{
+  "name": "ai-fitness-coach",
+  "version": "1.0.0",
+  "description": "AI-Based Diet & Fitness Coach - Comprehensive Platform",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "start": "turbo run start",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "docker:build": "docker-compose -f infrastructure/docker/docker-compose.yml build",
+    "docker:up": "docker-compose -f infrastructure/docker/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infrastructure/docker/docker-compose.yml down",
+    "dotnet:restore": "for /r %i in (*.csproj) do cd /d \"%~pi\" && dotnet restore",
+    "dotnet:build": "for /r %i in (*.csproj) do cd /d \"%~pi\" && dotnet build",
+    "dotnet:test": "for /r %i in (*.Test.csproj) do cd /d \"%~pi\" && dotnet test",
+    "mobile:ios": "cd apps/mobile && npm run ios",
+    "mobile:android": "cd apps/mobile && npm run android",    "web-app:dev": "cd apps/web-app && npm run dev",
+    "landing:dev": "cd apps/landing-page && npm run dev",
+    "dev:start": "powershell -ExecutionPolicy Bypass -File ./start-dev-services.ps1",
+    "dev:stop": "powershell -ExecutionPolicy Bypass -File ./stop-dev-services.ps1",
+    "dev:restart": "npm run dev:stop && timeout /t 3 && npm run dev:start",
+    "dev:start-ps": "powershell -ExecutionPolicy Bypass -File ./start-dev-services.ps1",
+    "dev:stop-ps": "powershell -ExecutionPolicy Bypass -File ./stop-dev-services.ps1",
+    "dev:concurrent": "concurrently --names \"LANDING,WEB-APP,API,NOTIFICATION,QUEUE\" --prefix-colors \"cyan,magenta,yellow,green,blue\" \"npm run landing:dev\" \"npm run web-app:dev\" \"cd apps/api && dotnet run\" \"cd apps/notification-service && dotnet run\" \"cd apps/queue-processor && dotnet run\"",
+    "install:all": "npm install && npm run dotnet:restore"
+  },
+  "dependencies": {
+    "axios": "^1.9.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.12.4",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "turbo": "^1.12.4",
+    "typescript": "^5.4.2",
+    "wait-on": "^8.0.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaplayan-atakan/ai-fitness-coach.git"
+  },
+  "keywords": [
+    "ai",
+    "fitness",
+    "diet",
+    "health",
+    "nutrition",
+    "react-native",
+    "nextjs",
+    "dotnet",
+    "monorepo",
+    "turborepo"
+  ],
+  "author": "Kaplayan Atakan",
+  "license": "MIT"
+}

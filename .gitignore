@@ -1,0 +1,100 @@
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.turbo/
+.env*.local
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.pidb
+*.userprefs
+TestResults/
+
+# Mobile specific
+android/app/build/
+ios/build/
+ios/Pods/
+ios/DerivedData/
+*.ipa
+*.apk
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Firebase
+firebase-admin-sdk.json
+.firebase/
+
+# Database
+*.db
+*.sqlite
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Temporary debug files
+chrome-errors.log
+landing-page-console.log
+
+# .NET specific
+*.pdb
+*.dll
+*.exe
+.vs/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# Package manager cache
+.npm
+.yarn
+.pnpm-store/
+
+# Editor temp files
+*~
+.tmp
+.temp
+
+# Certificate files
+*.pfx
+*.p12
+*.crt
+*.cer
+*.key

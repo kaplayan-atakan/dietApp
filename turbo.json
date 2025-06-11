@@ -1,0 +1,77 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "dist/**",
+        "build/**",
+        "bin/**",
+        "obj/**"
+      ],
+      "env": ["NODE_ENV"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "env": ["NODE_ENV"]
+    },
+    "start": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "env": ["NODE_ENV"]
+    },
+    "lint": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "dotnet:build": {
+      "dependsOn": ["^build"],
+      "outputs": ["bin/**", "obj/**"]
+    },
+    "dotnet:test": {
+      "dependsOn": ["dotnet:build"],
+      "outputs": ["TestResults/**"]
+    },
+    "mobile:ios": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "mobile:android": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    }
+  },
+  "globalEnv": [
+    "NODE_ENV",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "RABBITMQ_URL",
+    "OPENAI_API_KEY",
+    "FIREBASE_ADMIN_SDK_PATH",
+    "JWT_SECRET",
+    "NEXT_PUBLIC_API_URL",
+    "NEXT_PUBLIC_VAPID_PUBLIC_KEY",
+    "REACT_APP_API_URL",
+    "REACT_APP_FIREBASE_API_KEY",
+    "REACT_APP_FIREBASE_PROJECT_ID"
+  ]
+}

@@ -1,0 +1,843 @@
+import { renderHook, act } from '@testing-library/react';
+import useLogger from '../hooks/useLogger';
+import { LogLevel } from '../utils/logger';
+
+// Mock localStorage
+const mockLocalStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: jest.fn((key: string) => store[key] || null),
+    setItem: jest.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: jest.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: jest.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
+Object.defineProperty(window, 'localStorage', {
+  value: mockLocalStorage,
+});
+
+// Mock console methods - Logger uses log, warn, error
+const consoleSpy = {
+  log: jest.spyOn(console, 'log').mockImplementation(),
+  warn: jest.spyOn(console, 'warn').mockImplementation(),
+  error: jest.spyOn(console, 'error').mockImplementation(),
+};
+
+// Mock fetch for remote logging
+global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
+
+describe('useLogger hook', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLocalStorage.clear();
+    (global.fetch as jest.Mock).mockClear();
+  });
+  describe('Basic functionality', () => {
+    it('should initialize logger with default options', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      expect(result.current.logger).toBeDefined();
+      expect(typeof result.current.debug).toBe('function');
+      expect(typeof result.current.info).toBe('function');
+      expect(typeof result.current.warn).toBe('function');
+      expect(typeof result.current.error).toBe('function');
+      expect(typeof result.current.fatal).toBe('function');
+      expect(typeof result.current.logEvent).toBe('function');
+      expect(typeof result.current.logUserAction).toBe('function');
+      expect(typeof result.current.logPerformance).toBe('function');
+      expect(typeof result.current.getLogs).toBe('function');
+      expect(typeof result.current.clearLogs).toBe('function');
+    });
+    
+    it('should accept component name in options', () => {
+      const { result } = renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      expect(result.current.logger).toBeDefined();
+    });
+  });
+
+  describe('Logging methods', () => {
+    it('should log debug messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.debug('Test debug message', { data: 'test' }, 'test-action');
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[DEBUG]'),
+        expect.any(String),
+        'Test debug message',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({ data: 'test' }),
+        expect.stringContaining('Action:'),
+        'test-action'
+      );
+    });
+
+    it('should log info messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.info('Test info message', { data: 'test' });
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        expect.any(String),
+        'Test info message',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({ data: 'test' })
+      );
+    });
+
+    it('should log warning messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.warn('Test warning message');
+      });
+      
+      expect(consoleSpy.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[WARN]'),
+        expect.any(String),
+        'Test warning message'
+      );
+    });
+
+    it('should log error messages', () => {
+      const { result } = renderHook(() => useLogger());
+      const testError = new Error('Test error');
+      
+      act(() => {
+        result.current.error('Test error message', testError, { context: 'test' });
+      });
+      
+      expect(consoleSpy.error).toHaveBeenCalledWith(
+        expect.stringContaining('[ERROR]'),
+        expect.any(String),
+        'Test error message',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({ context: 'test' }),
+        expect.stringContaining('Error:'),
+        testError
+      );
+    });
+
+    it('should log fatal messages', () => {
+      const { result } = renderHook(() => useLogger());
+      const testError = new Error('Fatal error');
+      
+      act(() => {
+        result.current.fatal('Test fatal message', testError);
+      });
+      
+      expect(consoleSpy.error).toHaveBeenCalledWith(
+        expect.stringContaining('[FATAL]'),
+        expect.any(String),
+        'Test fatal message',
+        expect.stringContaining('Error:'),
+        testError
+      );
+    });
+
+    it('should include component name in logs when provided', () => {
+      const { result } = renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      act(() => {
+        result.current.info('Test message');
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        expect.any(String),
+        'Test message',
+        expect.stringContaining('Component:'),
+        'TestComponent'
+      );
+    });
+  });
+
+  describe('Event logging', () => {
+    it('should log events with context', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logEvent('user_click', {
+          button: 'submit',
+          form: 'login'
+        });
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        expect.any(String),
+        'Event: user_click',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({
+          button: 'submit',
+          form: 'login'
+        })
+      );
+    });
+  });
+  describe('Performance logging', () => {
+    it('should log performance metrics', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logPerformance('page_load', 1500, 'ms');
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        expect.any(String),
+        'Performance: page_load',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({
+          metric: 'page_load',
+          value: 1500,
+          unit: 'ms'
+        })
+      );
+    });
+
+    it('should log user actions', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logUserAction('button_click', { buttonId: 'submit-btn' });
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining('[INFO]'),
+        expect.any(String),
+        'User action: button_click',
+        expect.stringContaining('Context:'),
+        expect.objectContaining({
+          action: 'button_click',
+          details: { buttonId: 'submit-btn' }
+        })
+      );
+    });
+  });
+  describe('Configuration options', () => {
+    it('should respect log level configuration', () => {
+      const { result } = renderHook(() => useLogger({ 
+        componentName: 'TestComponent',
+        minLevel: LogLevel.WARN 
+      }));
+      
+      // Clear any previous calls
+      consoleSpy.log.mockClear();
+      consoleSpy.warn.mockClear();
+      consoleSpy.error.mockClear();
+      
+      act(() => {
+        result.current.debug('Debug message');
+        result.current.info('Info message');
+        result.current.warn('Warning message');
+      });
+      
+      // Should not have any debug/info logging calls
+      expect(consoleSpy.log).not.toHaveBeenCalled();
+      // Only warning should be logged
+      expect(consoleSpy.warn).toHaveBeenCalledWith(
+        expect.stringContaining('[WARN]'),
+        expect.any(String),
+        'Warning message',
+        expect.stringContaining('Component:'),
+        'TestComponent'
+      );
+    });
+
+    it('should log all levels when minLevel is DEBUG', () => {
+      const { result } = renderHook(() => useLogger({ 
+        componentName: 'TestComponent',
+        minLevel: LogLevel.DEBUG 
+      }));
+      
+      consoleSpy.log.mockClear();
+      consoleSpy.warn.mockClear();
+      consoleSpy.error.mockClear();
+      
+      act(() => {
+        result.current.debug('Debug message');
+        result.current.info('Info message');
+        result.current.warn('Warning message');
+        result.current.error('Error message', new Error('test'));
+      });
+      
+      // All should be logged
+      expect(consoleSpy.log).toHaveBeenCalledTimes(2); // debug + info
+      expect(consoleSpy.warn).toHaveBeenCalledTimes(1);
+      expect(consoleSpy.error).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Remote logging', () => {
+    it('should send logs to remote endpoint when enabled', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+
+      const { result } = renderHook(() => useLogger({
+        enableRemoteLogging: true,
+        remoteEndpoint: 'https://api.example.com/logs'
+      }));
+      
+      await act(async () => {
+        result.current.error('Test error for remote logging', new Error('Test'));
+        // Wait a tick for the async operation
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+      
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.example.com/logs',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: expect.stringContaining('Test error for remote logging'),
+        })
+      );
+    });
+
+    it('should handle remote logging failures gracefully', async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() => useLogger({
+        enableRemoteLogging: true,
+        remoteEndpoint: 'https://api.example.com/logs'
+      }));
+      
+      // Should not throw
+      await act(async () => {
+        result.current.error('Test error', new Error('Test'));
+        await new Promise(resolve => setTimeout(resolve, 0));
+      });
+      
+      expect(global.fetch).toHaveBeenCalled();
+      // Should still log to console even if remote fails
+      expect(consoleSpy.error).toHaveBeenCalled();
+    });
+  });
+
+  describe('Local storage', () => {
+    it('should store logs in localStorage when enabled', () => {
+      const { result } = renderHook(() => useLogger({
+        enableLocalStorage: true
+      }));
+      
+      act(() => {
+        result.current.info('Test storage message', { test: true });
+      });
+      
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'ai-fitness-coach-logs',
+        expect.stringContaining('Test storage message')
+      );
+    });
+
+    it('should limit stored log entries', () => {
+      const { result } = renderHook(() => useLogger({
+        enableLocalStorage: true,
+        maxStorageEntries: 2
+      }));
+      
+      // Add multiple logs
+      act(() => {
+        result.current.info('Log 1');
+        result.current.info('Log 2');
+        result.current.info('Log 3');
+      });
+      
+      // Should have called setItem for each log
+      expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(3);
+      
+      // The latest call should contain only the most recent entries
+      const lastCall = (mockLocalStorage.setItem as jest.Mock).mock.calls.slice(-1)[0];
+      const storedLogs = JSON.parse(lastCall[1]);
+      expect(storedLogs.length).toBe(2);
+    });
+
+    it('should handle localStorage errors gracefully', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation();
+      
+      // Mock localStorage to throw an error
+      mockLocalStorage.setItem.mockImplementationOnce(() => {
+        throw new Error('Storage quota exceeded');
+      });
+
+      const { result } = renderHook(() => useLogger({
+        enableLocalStorage: true
+      }));
+      
+      act(() => {
+        result.current.info('Test message');
+      });
+      
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Failed to write log to storage:',
+        expect.any(Error)
+      );
+      
+      consoleWarnSpy.mockRestore();
+    });
+  });
+
+  describe('Logger instance access', () => {
+    it('should provide access to the underlying logger instance', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      expect(result.current.logger).toBeDefined();
+      expect(typeof result.current.logger.log).toBe('function');
+    });
+
+    it('should maintain stable logger instance across re-renders', () => {
+      const { result, rerender } = renderHook(
+        ({ componentName }) => useLogger({ componentName }),
+        { initialProps: { componentName: 'TestComponent1' } }
+      );
+      
+      const initialLogger = result.current.logger;
+      
+      rerender({ componentName: 'TestComponent2' });
+      
+      // Logger instance should be the same (memoized)
+      expect(result.current.logger).toBe(initialLogger);
+    });
+  });
+});
+
+describe('useLogger hook', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLocalStorage.clear();
+    (global.fetch as jest.Mock).mockClear();
+  });
+
+  describe('Basic functionality', () => {
+    it('should initialize logger with default options', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      expect(result.current.logger).toBeDefined();
+      expect(typeof result.current.debug).toBe('function');
+      expect(typeof result.current.info).toBe('function');
+      expect(typeof result.current.warn).toBe('function');
+      expect(typeof result.current.error).toBe('function');
+      expect(typeof result.current.fatal).toBe('function');
+    });
+
+    it('should initialize logger with custom options', () => {
+      const options = {
+        minLevel: LogLevel.WARN,
+        enableConsole: false,
+        componentName: 'TestComponent',
+      };
+
+      const { result } = renderHook(() => useLogger(options));
+      
+      expect(result.current.logger).toBeDefined();
+    });
+
+    it('should reuse the same logger instance across re-renders', () => {
+      const { result, rerender } = renderHook(() => useLogger());
+      
+      const firstLogger = result.current.logger;
+      
+      rerender();
+      
+      const secondLogger = result.current.logger;
+      
+      expect(firstLogger).toBe(secondLogger);
+    });
+  });
+
+  describe('Logging methods', () => {    it('should log debug messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.debug('Test debug message', { data: 'test' }, 'test-action');
+      });
+      
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        expect.stringContaining('Test debug message'),
+        expect.any(String),
+        expect.objectContaining({ data: 'test' }),
+        expect.any(String),
+        'test-action'
+      );
+    });
+
+    it('should log info messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.info('Test info message', { data: 'test' });
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Test info message')
+      );
+    });
+
+    it('should log warning messages', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.warn('Test warning message');
+      });
+      
+      expect(consoleSpy.warn).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Test warning message')
+      );
+    });
+
+    it('should log error messages', () => {
+      const { result } = renderHook(() => useLogger());
+      const testError = new Error('Test error');
+      
+      act(() => {
+        result.current.error('Test error message', testError, { context: 'test' });
+      });
+      
+      expect(consoleSpy.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Test error message')
+      );
+    });
+
+    it('should log fatal messages', () => {
+      const { result } = renderHook(() => useLogger());
+      const testError = new Error('Fatal error');
+      
+      act(() => {
+        result.current.fatal('Test fatal message', testError);
+      });
+      
+      expect(consoleSpy.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Test fatal message')
+      );
+    });
+
+    it('should include component name in logs when provided', () => {
+      const { result } = renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      act(() => {
+        result.current.info('Test message');
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.stringContaining('[TestComponent]'),
+        expect.stringContaining('Test message')
+      );
+    });
+  });
+
+  describe('Specialized logging methods', () => {
+    it('should log events with logEvent', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logEvent('user-click', { buttonId: 'submit' });
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Event: user-click')
+      );
+    });
+
+    it('should log user actions with logUserAction', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logUserAction('login-attempt', { username: 'john@example.com' });
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('User action: login-attempt')
+      );
+    });
+
+    it('should log performance metrics with logPerformance', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logPerformance('api-response-time', 150, 'ms');
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Performance: api-response-time')
+      );
+    });
+
+    it('should use default unit for performance metrics', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.logPerformance('load-time', 200);
+      });
+      
+      expect(consoleSpy.info).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Performance: load-time')
+      );
+    });
+  });
+
+  describe('Log management', () => {
+    it('should retrieve logs with getLogs', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.info('Test log entry');
+      });
+      
+      const logs = result.current.getLogs();
+      
+      expect(Array.isArray(logs)).toBe(true);
+      expect(logs.length).toBeGreaterThan(0);
+      expect(logs[logs.length - 1].message).toBe('Test log entry');
+    });
+
+    it('should clear logs with clearLogs', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.info('Test log entry');
+      });
+      
+      let logs = result.current.getLogs();
+      expect(logs.length).toBeGreaterThan(0);
+      
+      act(() => {
+        result.current.clearLogs();
+      });
+      
+      logs = result.current.getLogs();
+      expect(logs.length).toBe(0);
+    });
+  });
+
+  describe('Component lifecycle logging', () => {
+    it('should log hook initialization when component name is provided', () => {
+      renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      expect(consoleSpy.debug).toHaveBeenCalledWith(
+        expect.stringContaining('[TestComponent]'),
+        expect.stringContaining('Hook initialized in TestComponent')
+      );
+    });
+
+    it('should log hook cleanup on unmount when component name is provided', () => {
+      const { unmount } = renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      unmount();
+      
+      expect(consoleSpy.debug).toHaveBeenCalledWith(
+        expect.stringContaining('[TestComponent]'),
+        expect.stringContaining('Hook cleanup in TestComponent')
+      );
+    });
+
+    it('should not log lifecycle events when no component name is provided', () => {
+      const { unmount } = renderHook(() => useLogger());
+      
+      // Clear any previous calls
+      consoleSpy.debug.mockClear();
+      
+      unmount();
+      
+      // Should not have any lifecycle logging calls
+      expect(consoleSpy.debug).not.toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Hook cleanup')
+      );
+    });
+  });
+
+  describe('Callback stability', () => {
+    it('should maintain stable references for logging methods', () => {
+      const { result, rerender } = renderHook(() => useLogger({ componentName: 'TestComponent' }));
+      
+      const firstRender = {
+        debug: result.current.debug,
+        info: result.current.info,
+        warn: result.current.warn,
+        error: result.current.error,
+        fatal: result.current.fatal,
+        logEvent: result.current.logEvent,
+        logUserAction: result.current.logUserAction,
+        logPerformance: result.current.logPerformance,
+        getLogs: result.current.getLogs,
+        clearLogs: result.current.clearLogs,
+      };
+      
+      rerender();
+      
+      const secondRender = {
+        debug: result.current.debug,
+        info: result.current.info,
+        warn: result.current.warn,
+        error: result.current.error,
+        fatal: result.current.fatal,
+        logEvent: result.current.logEvent,
+        logUserAction: result.current.logUserAction,
+        logPerformance: result.current.logPerformance,
+        getLogs: result.current.getLogs,
+        clearLogs: result.current.clearLogs,
+      };
+      
+      // All methods should maintain stable references
+      expect(firstRender.debug).toBe(secondRender.debug);
+      expect(firstRender.info).toBe(secondRender.info);
+      expect(firstRender.warn).toBe(secondRender.warn);
+      expect(firstRender.error).toBe(secondRender.error);
+      expect(firstRender.fatal).toBe(secondRender.fatal);
+      expect(firstRender.logEvent).toBe(secondRender.logEvent);
+      expect(firstRender.logUserAction).toBe(secondRender.logUserAction);
+      expect(firstRender.logPerformance).toBe(secondRender.logPerformance);
+      expect(firstRender.getLogs).toBe(secondRender.getLogs);
+      expect(firstRender.clearLogs).toBe(secondRender.clearLogs);
+    });
+
+    it('should update callbacks when componentName changes', () => {
+      const { result, rerender } = renderHook(
+        ({ componentName }) => useLogger({ componentName }),
+        { initialProps: { componentName: 'Component1' } }
+      );
+      
+      const firstCallback = result.current.debug;
+      
+      rerender({ componentName: 'Component2' });
+      
+      const secondCallback = result.current.debug;
+      
+      // Callbacks should be different when componentName changes
+      expect(firstCallback).not.toBe(secondCallback);
+    });
+  });
+
+  describe('Local storage integration', () => {
+    it('should store logs in localStorage by default', () => {
+      const { result } = renderHook(() => useLogger());
+      
+      act(() => {
+        result.current.info('Test message for storage');
+      });
+      
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+        'app-logs',
+        expect.any(String)
+      );
+    });
+
+    it('should not store logs when localStorage is disabled', () => {
+      const { result } = renderHook(() => useLogger({ enableLocalStorage: false }));
+      
+      mockLocalStorage.setItem.mockClear();
+      
+      act(() => {
+        result.current.info('Test message without storage');
+      });
+      
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Log level filtering', () => {
+    it('should respect minimum log level', () => {
+      const { result } = renderHook(() => useLogger({ minLevel: LogLevel.WARN }));
+      
+      consoleSpy.debug.mockClear();
+      consoleSpy.info.mockClear();
+      consoleSpy.warn.mockClear();
+      
+      act(() => {
+        result.current.debug('Debug message');
+        result.current.info('Info message');
+        result.current.warn('Warning message');
+      });
+      
+      // Only warning should be logged
+      expect(consoleSpy.debug).not.toHaveBeenCalled();
+      expect(consoleSpy.info).not.toHaveBeenCalled();
+      expect(consoleSpy.warn).toHaveBeenCalled();
+    });
+
+    it('should log all levels when minLevel is DEBUG', () => {
+      const { result } = renderHook(() => useLogger({ minLevel: LogLevel.DEBUG }));
+      
+      consoleSpy.debug.mockClear();
+      consoleSpy.info.mockClear();
+      consoleSpy.warn.mockClear();
+      
+      act(() => {
+        result.current.debug('Debug message');
+        result.current.info('Info message');
+        result.current.warn('Warning message');
+      });
+      
+      // All should be logged
+      expect(consoleSpy.debug).toHaveBeenCalled();
+      expect(consoleSpy.info).toHaveBeenCalled();
+      expect(consoleSpy.warn).toHaveBeenCalled();
+    });
+  });
+
+  describe('Error handling', () => {
+    it('should handle errors in logging gracefully', () => {
+      // Mock console.error to throw an error
+      const originalError = console.error;
+      console.error = jest.fn(() => {
+        throw new Error('Console error failed');
+      });
+      
+      const { result } = renderHook(() => useLogger());
+      
+      // This should not throw an error
+      expect(() => {
+        act(() => {
+          result.current.error('Test error message', new Error('Test error'));
+        });
+      }).not.toThrow();
+      
+      // Restore console.error
+      console.error = originalError;
+    });
+
+    it('should handle localStorage errors gracefully', () => {
+      // Mock localStorage.setItem to throw an error
+      mockLocalStorage.setItem.mockImplementation(() => {
+        throw new Error('Storage quota exceeded');
+      });
+      
+      const { result } = renderHook(() => useLogger());
+      
+      // This should not throw an error
+      expect(() => {
+        act(() => {
+          result.current.info('Test message');
+        });
+      }).not.toThrow();
+    });
+  });
+});

@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # Database
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=AiFitness123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    networks:
+      - ai-fitness-network
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-fitness-network
+
+  # RabbitMQ for message queuing
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=ai-fitness
+      - RABBITMQ_DEFAULT_PASS=AiFitness123!
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ai-fitness-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  # API Service (Development)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: api-dev
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AiFitnessCoach;User Id=sa;Password=AiFitness123!;TrustServerCertificate=true
+      - JwtSettings__Secret=your-super-secret-jwt-key-that-is-at-least-32-characters-long
+      - Redis__ConnectionString=redis:6379
+      - RabbitMQ__ConnectionString=amqp://ai-fitness:AiFitness123!@rabbitmq:5672/
+    volumes:
+      - ./apps/api:/app
+      - ./packages/shared-types:/packages/shared-types
+    depends_on:
+      - database
+      - redis
+      - rabbitmq
+    networks:
+      - ai-fitness-network
+
+  # Web App (Development)
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: web-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:5000
+      - NEXT_PUBLIC_NOTIFICATION_URL=http://localhost:5001
+    volumes:
+      - ./apps/web-app:/app
+      - ./packages:/packages
+      - /app/node_modules
+      - /packages/shared-types/node_modules
+      - /packages/ui-components/node_modules
+      - /packages/api-client/node_modules
+    networks:
+      - ai-fitness-network
+
+  # Landing Page (Development)
+  landing-page:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: landing-page-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./apps/landing-page:/app
+      - ./packages:/packages
+      - /app/node_modules
+    networks:
+      - ai-fitness-network
+
+  # Development tools
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - ai-fitness-network
+
+volumes:
+  db_data:
+  redis_data:
+  rabbitmq_data:
+
+networks:
+  ai-fitness-network:
+    driver: bridge

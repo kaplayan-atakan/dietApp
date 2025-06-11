@@ -1,0 +1,37 @@
+{
+  "name": "@ai-fitness/notification-client",
+  "version": "1.0.0",
+  "description": "Notification client for push notifications",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@ai-fitness/shared-types": "*"
+  },
+  "peerDependencies": {
+    "@react-native-firebase/messaging": "^19.0.0",
+    "react-native": "^0.72.0"
+  },
+  "peerDependenciesMeta": {
+    "@react-native-firebase/messaging": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.4.2",
+    "@types/node": "^20.11.17",
+    "eslint": "^8.57.0",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0"
+  }
+}

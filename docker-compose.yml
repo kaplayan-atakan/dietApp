@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # Database
+  database:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=AiFitness123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    networks:
+      - ai-fitness-network
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ai-fitness-network
+
+  # RabbitMQ for message queuing
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    hostname: rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=ai-fitness
+      - RABBITMQ_DEFAULT_PASS=AiFitness123!
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ai-fitness-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # API Service
+  api:
+    build:
+      context: .
+      target: api-final
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AiFitnessCoach;User Id=sa;Password=AiFitness123!;TrustServerCertificate=true
+      - JwtSettings__Secret=your-super-secret-jwt-key-that-is-at-least-32-characters-long
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      - database
+      - redis
+    networks:
+      - ai-fitness-network
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      target: notification-final
+    ports:
+      - "5001:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AiFitnessCoach;User Id=sa;Password=AiFitness123!;TrustServerCertificate=true
+      - Redis__ConnectionString=redis:6379
+      - RabbitMQ__ConnectionString=amqp://ai-fitness:AiFitness123!@rabbitmq:5672/
+    depends_on:
+      - database
+      - redis
+      - rabbitmq
+    networks:
+      - ai-fitness-network
+  # Queue Processor
+  queue-processor:
+    build:
+      context: .
+      target: queue-final
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Server=database,1433;Database=AiFitnessCoach;User Id=sa;Password=AiFitness123!;TrustServerCertificate=true
+      - Redis__ConnectionString=redis:6379
+      - RabbitMQ__ConnectionString=amqp://ai-fitness:AiFitness123!@rabbitmq:5672/
+    depends_on:
+      - database
+      - redis
+      - rabbitmq
+    networks:
+      - ai-fitness-network
+
+  # Web Server (Nginx)
+  web:
+    build:
+      context: .
+      target: web-server
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - notification-service
+    networks:
+      - ai-fitness-network
+
+  # Development tools
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - ai-fitness-network
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  ai-fitness-network:
+    driver: bridge
