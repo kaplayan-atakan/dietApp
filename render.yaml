@@ -1,0 +1,65 @@
+# Render.com deployment configuration
+# This file defines how services should be deployed on Render.com
+
+services:
+  # Main API Service
+  - type: web
+    name: ai-fitness-api
+    env: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-fitness-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://ai-fitness-coach.vercel.app,https://kaplayan-atakan.github.io
+
+  # Admin API Service  
+  - type: web
+    name: ai-fitness-admin-api
+    env: docker
+    dockerfilePath: ./apps/admin-api/Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-fitness-db
+          property: connectionString
+
+  # Notification Service
+  - type: web
+    name: ai-fitness-notifications
+    env: docker
+    dockerfilePath: ./apps/notification-service/Dockerfile
+    plan: free
+    region: oregon
+    branch: main
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:8080
+
+databases:
+  # PostgreSQL Database (free tier)
+  - name: ai-fitness-db
+    databaseName: ai_fitness_coach
+    user: ai_fitness_user
+    plan: free
+    region: oregon

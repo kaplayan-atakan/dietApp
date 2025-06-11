@@ -10,6 +10,9 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add environment variables to configuration
+builder.Configuration.AddEnvironmentVariables();
+
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -62,12 +65,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    if (builder.Environment.IsDevelopment())
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+        options.AddPolicy("AllowAll", policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+    }
+    else
+    {
+        options.AddPolicy("Production", policy =>
+        {
+            var allowedOrigins = builder.Configuration["ALLOWED_ORIGINS"]?.Split(',') ?? new[]
+            {
+                "https://ai-fitness-coach.vercel.app",
+                "https://kaplayan-atakan.github.io"
+            };
+            
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        });
+    }
 });
 
 // Register services
@@ -127,10 +149,18 @@ try
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "AI Fitness Coach API v1");
         c.RoutePrefix = "";
-    });
-
-    app.UseHttpsRedirection();
-    app.UseCors("AllowAll");
+    });    app.UseHttpsRedirection();
+    
+    // Use appropriate CORS policy based on environment
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseCors("AllowAll");
+    }
+    else
+    {
+        app.UseCors("Production");
+    }
+    
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

@@ -1,0 +1,48 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    branches: ["main", "master"]
+    paths: 
+      - "apps/api/**"
+      - "apps/admin-api/**" 
+      - "apps/notification-service/**"
+      - "packages/shared-types/**"
+  workflow_dispatch:
+
+jobs:
+  deploy-api:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'apps/api/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy API to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_API_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-admin-api:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'apps/admin-api/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Admin API to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_ADMIN_API_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}
+
+  deploy-notification-service:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'apps/notification-service/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy Notification Service to Render
+        uses: johnbeynon/render-deploy-action@v0.0.8
+        with:
+          service-id: ${{ secrets.RENDER_NOTIFICATION_SERVICE_ID }}
+          api-key: ${{ secrets.RENDER_API_KEY }}

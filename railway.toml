@@ -1,0 +1,37 @@
+# Railway deployment configuration
+$schema: https://railway.app/railway.schema.json
+version: 2
+
+services:
+  api:
+    source: apps/api
+    build:
+      dockerfile: apps/api/Dockerfile
+    variables:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:$PORT
+    healthcheck:
+      endpoint: /health
+      timeout: 30
+    
+  admin-api:
+    source: apps/admin-api  
+    build:
+      dockerfile: apps/admin-api/Dockerfile
+    variables:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:$PORT
+    healthcheck:
+      endpoint: /health
+      timeout: 30
+
+  notification-service:
+    source: apps/notification-service
+    build:
+      dockerfile: apps/notification-service/Dockerfile
+    variables:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://0.0.0.0:$PORT
+    healthcheck:
+      endpoint: /health
+      timeout: 30
