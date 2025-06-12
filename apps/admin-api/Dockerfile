@@ -6,14 +6,14 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy project files
+# Copy project files (relative to repository root)
 COPY ["apps/admin-api/admin-api.csproj", "apps/admin-api/"]
 
 # Restore dependencies
 RUN dotnet restore "apps/admin-api/admin-api.csproj"
 
 # Copy all source code
-COPY . .
+COPY apps/admin-api/ apps/admin-api/
 
 # Build the project
 WORKDIR "/src/apps/admin-api"

@@ -6,7 +6,7 @@ EXPOSE 8080
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy project files
+# Copy project files (relative to repository root)
 COPY ["apps/notification-service/AiFitnessCoach.NotificationService.csproj", "apps/notification-service/"]
 COPY ["packages/shared-types/AiFitnessCoach.Shared.csproj", "packages/shared-types/"]
 
@@ -14,7 +14,8 @@ COPY ["packages/shared-types/AiFitnessCoach.Shared.csproj", "packages/shared-typ
 RUN dotnet restore "apps/notification-service/AiFitnessCoach.NotificationService.csproj"
 
 # Copy all source code
-COPY . .
+COPY apps/notification-service/ apps/notification-service/
+COPY packages/shared-types/ packages/shared-types/
 
 # Build the project
 WORKDIR "/src/apps/notification-service"
