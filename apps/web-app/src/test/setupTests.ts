@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// Jest types - ensure jest is available in global scope
+/// <reference types="jest" />
+
 // Mock global functions that are not available in Jest environment
 global.btoa = global.btoa || ((str: string) => Buffer.from(str, 'binary').toString('base64'));
 global.atob = global.atob || ((b64Encoded: string) => Buffer.from(b64Encoded, 'base64').toString('binary'));
