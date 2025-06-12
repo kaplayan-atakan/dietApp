@@ -3,7 +3,7 @@ interface LogEntry {
   message: string;
   component?: string;
   action?: string;
-  context?: any;
+  context?: Record<string, unknown>;
   userId?: string;
   sessionId?: string;
   ipAddress?: string;

@@ -34,8 +34,6 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          cd apps/landing-page
-          npm ci
 
       - name: Build shared packages first
         run: |
@@ -45,6 +43,13 @@ jobs:
           npm run build
           cd ../api-client
           npm run build
+          cd ../ui-components
+          npm run build
+
+      - name: Install landing page dependencies
+        run: |
+          cd apps/landing-page
+          npm ci
 
       - name: Build Landing Page
         run: |

@@ -65,31 +65,42 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // CORS
 builder.Services.AddCors(options =>
 {
-    if (builder.Environment.IsDevelopment())
+    options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        options.AddPolicy("AllowAll", policy =>
+        var allowedOrigins = builder.Configuration.GetValue<string>("ALLOWED_ORIGINS");
+        
+        if (builder.Environment.IsDevelopment() || string.IsNullOrEmpty(allowedOrigins))
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyMethod()
-                  .AllowAnyHeader();
-        });
-    }
-    else
-    {
-        options.AddPolicy("Production", policy =>
-        {
-            var allowedOrigins = builder.Configuration["ALLOWED_ORIGINS"]?.Split(',') ?? new[]
-            {
-                "https://ai-fitness-coach.vercel.app",
-                "https://kaplayan-atakan.github.io"
-            };
-            
-            policy.WithOrigins(allowedOrigins)
+            // Development için localhost'lara izin ver
+            policy.WithOrigins(
+                    "http://localhost:3000", 
+                    "http://localhost:3001", 
+                    "http://localhost:5173",
+                    "https://localhost:3000",
+                    "https://localhost:3001",
+                    "https://localhost:5173"
+                  )
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        });
-    }
+        }
+        else if (allowedOrigins == "DEVELOPMENT_ALL")
+        {
+            // Development için tüm originlere izin ver
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            // Production için specific originler
+            var origins = allowedOrigins.Split(',');
+            policy.WithOrigins(origins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials();
+        }
+    });
 });
 
 // Register services
@@ -151,15 +162,8 @@ try
         c.RoutePrefix = "";
     });    app.UseHttpsRedirection();
     
-    // Use appropriate CORS policy based on environment
-    if (app.Environment.IsDevelopment())
-    {
-        app.UseCors("AllowAll");
-    }
-    else
-    {
-        app.UseCors("Production");
-    }
+    // Use CORS policy
+    app.UseCors("AllowSpecificOrigins");
     
     app.UseAuthentication();
     app.UseAuthorization();

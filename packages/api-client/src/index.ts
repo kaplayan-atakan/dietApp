@@ -41,8 +41,7 @@ export class ApiClient {
     });
 
     this.setupInterceptors();
-  }
-  private setupInterceptors() {
+  }  private setupInterceptors() {
     // Request interceptor
     this.client.interceptors.request.use(
       (config) => {
@@ -51,7 +50,7 @@ export class ApiClient {
         }
         return config;
       },
-      (error) => {
+      (error: AxiosError) => {
         this.logApiError(error, 'Request interceptor');
         return Promise.reject(error);
       }
@@ -60,7 +59,7 @@ export class ApiClient {
     // Response interceptor
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
+      (error: AxiosError) => {
         this.logApiError(error, 'Response interceptor');
         if (error.response?.status === 401) {
           this.clearAuth();
@@ -115,12 +114,15 @@ export class ApiClient {
       throw this.handleError(error);
     }
   }
-
-  private handleError(error: any) {
-    if (error.response?.data) {
-      return new Error(error.response.data.message || 'API Error');
+  private handleError(error: unknown) {
+    if (error && typeof error === 'object' && 'response' in error) {
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.data) {
+        const responseData = axiosError.response.data as { message?: string };
+        return new Error(responseData.message || 'API Error');
+      }
     }
-    return error;
+    return error instanceof Error ? error : new Error('Unknown error');
   }
   // Authentication endpoints
   async login(email: string, password: string): Promise<AuthResponse> {

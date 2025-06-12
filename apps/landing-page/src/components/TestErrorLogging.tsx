@@ -49,7 +49,7 @@ const TestErrorLoggingComponent: React.FC = () => {
 
   const handleApiError = () => {
     // Simulate an API error during landing page operation
-    logger.error('Landing page API error', {
+    logger?.error('Landing page API error', {
       component: 'LandingPage.ContactForm',
       action: 'SubmitContact',
       errorDetails: 'Failed to submit contact form',
@@ -66,7 +66,7 @@ const TestErrorLoggingComponent: React.FC = () => {
     // Simulate slow loading
     const loadTime = Math.floor(Math.random() * 8000) + 2000; // 2-10 seconds
     
-    logger.logPerformance('PageLoad', loadTime, 'LandingPage.Hero');
+    logger?.logPerformance('PageLoad', loadTime, 'LandingPage.Hero');
     setTestResult(`Performance issue logged! Load time: ${loadTime}ms`);
   };
 

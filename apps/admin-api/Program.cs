@@ -54,39 +54,42 @@ builder.Services.AddAuthorization(options =>
 // CORS
 builder.Services.AddCors(options =>
 {
-    if (builder.Environment.IsDevelopment())
+    options.AddPolicy("AllowSpecificOrigins", policy =>
     {
-        options.AddPolicy("AdminPanel", policy =>
+        var allowedOrigins = builder.Configuration.GetValue<string>("ALLOWED_ORIGINS");
+        
+        if (builder.Environment.IsDevelopment() || string.IsNullOrEmpty(allowedOrigins))
         {
+            // Development için localhost'lara izin ver
             policy.WithOrigins(
                     "http://localhost:3000", 
                     "http://localhost:3001", 
+                    "http://localhost:5173",
                     "https://localhost:3000",
                     "https://localhost:3001",
-                    "http://localhost:5173",  // Vite dev server default port
                     "https://localhost:5173"
                   )
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        });
-    }
-    else
-    {
-        options.AddPolicy("Production", policy =>
+        }
+        else if (allowedOrigins == "DEVELOPMENT_ALL")
         {
-            var allowedOrigins = builder.Configuration["ALLOWED_ORIGINS"]?.Split(',') ?? new[]
-            {
-                "https://ai-fitness-coach.vercel.app",
-                "https://kaplayan-atakan.github.io"
-            };
-            
-            policy.WithOrigins(allowedOrigins)
+            // Development için tüm originlere izin ver
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        }
+        else
+        {
+            // Production için specific originler
+            var origins = allowedOrigins.Split(',');
+            policy.WithOrigins(origins)
                   .AllowAnyMethod()
                   .AllowAnyHeader()
                   .AllowCredentials();
-        });
-    }
+        }
+    });
 });
 
 // Register services
@@ -141,15 +144,8 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
-// Use appropriate CORS policy based on environment
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AdminPanel");
-}
-else
-{
-    app.UseCors("Production");
-}
+// Use CORS policy
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();

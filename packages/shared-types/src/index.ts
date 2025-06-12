@@ -218,7 +218,7 @@ export interface NotificationToken {
 }
 
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
@@ -242,7 +242,7 @@ export interface AIProcessingRequest {
   deviceToken?: string;
   priority: 'low' | 'normal' | 'high';
   requestedAt: Date;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown>;
 }
 
 export interface AIRecommendation {
@@ -298,6 +298,6 @@ export interface ValidationError {
 export interface ApiError {
   message: string;
   code: string;
-  details?: any;
+  details?: unknown;
   validationErrors?: ValidationError[];
 }
