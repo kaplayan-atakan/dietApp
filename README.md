@@ -2,6 +2,14 @@
 
 A comprehensive AI-powered fitness and nutrition coaching platform built with modern technologies in a Turborepo monorepo structure.
 
+## 🌐 Live Demo
+
+- **Landing Page**: [https://kaplayan-atakan.github.io/dietApp/](https://kaplayan-atakan.github.io/dietApp/)
+- **Web App**: [Vercel Deployment](https://your-project.vercel.app) (Setup required)
+- **API Documentation**: [Render.com Backend](https://ai-fitness-api.onrender.com/swagger) (Setup required)
+
+> 📖 **Deployment Guide**: See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for complete setup instructions
+
 ## 🏗️ Architecture Overview
 
 This monorepo contains multiple applications and shared packages:

@@ -33,7 +33,9 @@ jobs:
           cd ../api-client
           npm run build
           cd ../ui-components
-          npm run build      - name: Build Web App
+          npm run build
+
+      - name: Build Web App
         run: |
           cd apps/web-app
           npm run build

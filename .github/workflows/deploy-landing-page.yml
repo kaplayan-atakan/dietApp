@@ -37,6 +37,15 @@ jobs:
           cd apps/landing-page
           npm ci
 
+      - name: Build shared packages first
+        run: |
+          cd packages/utils
+          npm run build
+          cd ../shared-types
+          npm run build
+          cd ../api-client
+          npm run build
+
       - name: Build Landing Page
         run: |
           cd apps/landing-page
