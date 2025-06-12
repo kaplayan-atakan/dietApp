@@ -12,13 +12,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "clean": "rm -rf .next out"
-  },
-  "dependencies": {
-    "@ai-fitness/api-client": "*",
-    "@ai-fitness/notification-client": "*",
-    "@ai-fitness/shared-types": "*",
-    "@ai-fitness/ui-components": "*",
-    "@ai-fitness/utils": "*",
+  },  "dependencies": {
+    "@ai-fitness/api-client": "file:../../packages/api-client",
+    "@ai-fitness/notification-client": "file:../../packages/notification-client",
+    "@ai-fitness/shared-types": "file:../../packages/shared-types",
+    "@ai-fitness/ui-components": "file:../../packages/ui-components",
+    "@ai-fitness/utils": "file:../../packages/utils",
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.1",
     "@hookform/resolvers": "^3.3.4",

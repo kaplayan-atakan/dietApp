@@ -25,6 +25,8 @@
     "dotnet:test": "for /r %i in (*.Test.csproj) do cd /d \"%~pi\" && dotnet test",
     "mobile:ios": "cd apps/mobile && npm run ios",
     "mobile:android": "cd apps/mobile && npm run android",    "web-app:dev": "cd apps/web-app && npm run dev",
+    "web-app:build": "cd apps/web-app && npm run build",
+    "build:web-app": "cd apps/web-app && npm run build",
     "landing:dev": "cd apps/landing-page && npm run dev",
     "dev:start": "powershell -ExecutionPolicy Bypass -File ./start-dev-services.ps1",
     "dev:stop": "powershell -ExecutionPolicy Bypass -File ./stop-dev-services.ps1",

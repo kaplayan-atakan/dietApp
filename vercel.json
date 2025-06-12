@@ -1,0 +1,27 @@
+{
+  "version": 2,
+  "name": "ai-fitness-coach",
+  "projects": [
+    {
+      "name": "ai-fitness-coach-web-app",
+      "source": "apps/web-app",
+      "framework": "nextjs",
+      "env": {
+        "NEXT_PUBLIC_API_URL": "https://dietapp-k2pl.onrender.com/api",
+        "NEXT_PUBLIC_NOTIFICATION_URL": "https://ai-fitness-notifications.onrender.com",
+        "NEXT_PUBLIC_ADMIN_API_URL": "https://ai-fitness-admin-api.onrender.com",
+        "NEXT_PUBLIC_APP_NAME": "AI Fitness Coach",
+        "NEXT_PUBLIC_APP_VERSION": "1.0.0"
+      },
+      "build": {
+        "env": {
+          "NEXT_PUBLIC_API_URL": "https://dietapp-k2pl.onrender.com/api",
+          "NEXT_PUBLIC_NOTIFICATION_URL": "https://ai-fitness-notifications.onrender.com",
+          "NEXT_PUBLIC_ADMIN_API_URL": "https://ai-fitness-admin-api.onrender.com",
+          "NEXT_PUBLIC_APP_NAME": "AI Fitness Coach",
+          "NEXT_PUBLIC_APP_VERSION": "1.0.0"
+        }
+      }
+    }
+  ]
+}

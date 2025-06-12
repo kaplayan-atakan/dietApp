@@ -51,8 +51,12 @@ class ErrorLogger {
     const env = process.env.NODE_ENV || 'development';
     return this.config.enabledEnvironments.includes(env);
   }
-
   private setupGlobalErrorHandlers(): void {
+    // Only set up global error handlers in browser environment
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Unhandled errors
     window.addEventListener('error', (event) => {
       this.error('Unhandled JavaScript Error', {
@@ -83,9 +87,7 @@ class ErrorLogger {
     });
 
     // React error boundary support
-    if (typeof window !== 'undefined') {
-      (window as any).__errorLogger = this;
-    }
+    (window as any).__errorLogger = this;
   }
 
   private setupPeriodicFlush(): void {
