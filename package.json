@@ -6,9 +6,9 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ],
-  "scripts": {
+  ],  "scripts": {
     "build": "turbo run build",
+    "build:packages": "cd packages/shared-types && npm run build && cd ../utils && npm run build && cd ../api-client && npm run build && cd ../ui-components && npm run build && cd ../notification-client && npm run build",
     "dev": "turbo run dev",
     "start": "turbo run start",
     "test": "turbo run test",

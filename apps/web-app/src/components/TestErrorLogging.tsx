@@ -3,16 +3,24 @@
  */
 'use client';
 
-import React, { useState } from 'react';
-import { useErrorLogger } from '../utils/errorLogger';
+import React, { useState, useEffect } from 'react';
+import { getErrorLogger } from '@ai-fitness/utils';
 
 export default function TestErrorLogging() {
   const [testResult, setTestResult] = useState<string>('');
+  const [logger, setLogger] = useState<any>(null);
   
-  // Error logger hook automatically initializes logging
-  const logger = useErrorLogger();
+  useEffect(() => {
+    try {
+      const loggerInstance = getErrorLogger();
+      setLogger(loggerInstance);
+    } catch (error) {
+      console.error('Error logger not initialized:', error);
+    }
+  }, []);
 
   const handleInfoLog = () => {
+    if (!logger) return;
     logger.info('User clicked info test button', {
       component: 'TestErrorLogging',
       action: 'InfoButtonClick',

@@ -1,6 +1,8 @@
 {
   "version": 2,
-  "framework": "nextjs",
+  "name": "ai-fitness-coach-web-app",
+  "buildCommand": "cd ../.. && npm install && npm run build:packages && cd apps/web-app && npm run build",
+  "installCommand": "cd ../.. && npm install",
   "env": {
     "NEXT_PUBLIC_API_URL": "https://dietapp-k2pl.onrender.com/api",
     "NEXT_PUBLIC_NOTIFICATION_URL": "https://ai-fitness-notifications.onrender.com",

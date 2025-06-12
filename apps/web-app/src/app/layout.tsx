@@ -5,7 +5,7 @@ import { AuthProvider } from '../contexts/AuthContext';
 import { NotificationProvider } from '../contexts/NotificationContext';
 import { ErrorLoggerProvider } from '../contexts/ErrorLoggerContext';
 import { Providers } from '../components/Providers';
-import { ErrorBoundary } from '../utils/errorLogger';
+import { default as ErrorBoundary } from '../components/ErrorBoundary';
 
 const inter = Inter({ subsets: ['latin'] });
 
