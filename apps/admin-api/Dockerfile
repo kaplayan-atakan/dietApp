@@ -2,18 +2,21 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # Copy project files (relative to repository root)
 COPY ["apps/admin-api/admin-api.csproj", "apps/admin-api/"]
+COPY ["packages/shared-types/AiFitnessCoach.Shared.csproj", "packages/shared-types/"]
 
 # Restore dependencies
 RUN dotnet restore "apps/admin-api/admin-api.csproj"
 
 # Copy all source code
 COPY apps/admin-api/ apps/admin-api/
+COPY packages/shared-types/ packages/shared-types/
 
 # Build the project
 WORKDIR "/src/apps/admin-api"
